@@ -1,0 +1,34 @@
+<svg viewBox="0 0 680 470" width="100%" role="img" xmlns="http://www.w3.org/2000/svg">
+  <title>「今日热搜」数据流图</title>
+  <desc>站长每日手动更新数据文件，页面加载时读取渲染榜单并存入浏览器本地缓存，断网时从缓存恢复</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect x="190" y="36" width="300" height="60" rx="12" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.5"/>
+  <text class="th" x="340" y="58" text-anchor="middle" dominant-baseline="central" fill="#412402">站长（你）</text>
+  <text class="ts" x="340" y="80" text-anchor="middle" dominant-baseline="central" fill="#854F0B">每天手动整理 10 条热点</text>
+  <line x1="340" y1="96" x2="340" y2="132" stroke="#5F5E5A" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <text x="352" y="118" fill="#5F5E5A" font-size="12" class="ts">更新 + 提交到 GitHub</text>
+  <rect x="190" y="136" width="300" height="60" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="0.5"/>
+  <text class="th" x="340" y="158" text-anchor="middle" dominant-baseline="central" fill="#173404">数据文件 data.js（唯一源头）</text>
+  <text class="ts" x="340" y="180" text-anchor="middle" dominant-baseline="central" fill="#3B6D11">10 条记录 · 存在 GitHub 仓库里</text>
+  <line x1="340" y1="196" x2="340" y2="232" stroke="#5F5E5A" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <text x="352" y="218" fill="#5F5E5A" font-size="12" class="ts">页面加载时读取</text>
+  <rect x="190" y="236" width="300" height="60" rx="12" fill="#FBEAF0" stroke="#993556" stroke-width="0.5"/>
+  <text class="th" x="340" y="258" text-anchor="middle" dominant-baseline="central" fill="#4B1528">前端 index.html</text>
+  <text class="ts" x="340" y="280" text-anchor="middle" dominant-baseline="central" fill="#993556">渲染 Top10 榜单 + 日期</text>
+  <line x1="340" y1="296" x2="340" y2="332" stroke="#5F5E5A" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <text x="352" y="318" fill="#5F5E5A" font-size="12" class="ts">显示给访客</text>
+  <rect x="190" y="336" width="300" height="60" rx="12" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+  <text class="th" x="340" y="358" text-anchor="middle" dominant-baseline="central" fill="#042C53">用户浏览器</text>
+  <text class="ts" x="340" y="380" text-anchor="middle" dominant-baseline="central" fill="#185FA5">看榜单 · 点标题跳原文</text>
+  <path d="M490 266 Q 620 266 620 366 Q 620 396 492 396 L 492 384" fill="none" stroke="#5F5E5A" stroke-width="1.2" stroke-dasharray="6 4" marker-end="url(#arrow)"/>
+  <rect x="40" y="352" width="150" height="60" rx="12" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5" stroke-dasharray="6 4"/>
+  <text class="th" x="115" y="374" text-anchor="middle" dominant-baseline="central" fill="#042C53">浏览器本地缓存</text>
+  <text class="ts" x="115" y="396" text-anchor="middle" dominant-baseline="central" fill="#185FA5">断网时的备份</text>
+  <line x1="190" y1="382" x2="188" y2="382" stroke="#5F5E5A" stroke-width="1.2" stroke-dasharray="6 4"/>
+  <path d="M190 372 L 120 372 L 120 300 L 188 268" fill="none" stroke="#5F5E5A" stroke-width="1.2" stroke-dasharray="6 4" marker-end="url(#arrow)"/>
+  <text x="40" y="446" fill="#5F5E5A" font-size="12" class="ts">实线 = 正常路径：数据每天走一遍「手动更新 → 文件 → 页面 → 用户」；虚线 = 断网兜底：缓存直接喂给页面</text>
+</svg>
