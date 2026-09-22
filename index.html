@@ -3,10 +3,177 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vibe Coding 项目</title>
+  <title>今日热搜</title>
+  <style>
+    /* ========== 极简主题：砍掉一切不影响「看榜」的装饰 ========== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f7f7f8;
+      color: #1a1a1a;
+      line-height: 1.5;
+    }
+
+    /* 页面主体：限宽居中，手机上自动留边，永不横向滚动 */
+    .page {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+
+    .page-header { margin-bottom: 16px; }
+
+    .page-title {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .page-date {
+      margin-top: 4px;
+      font-size: 14px;
+      color: #888;
+    }
+
+    /* 榜单：白卡片，每条一行，靠序号+热度做视觉层次 */
+    .hot-list {
+      list-style: none;
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    }
+
+    .hot-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 16px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .hot-item:last-child { border-bottom: none; }
+
+    /* 排名：前三名给警示红，其余灰色 */
+    .hot-rank {
+      flex: none;
+      width: 26px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 16px;
+      color: #999;
+      font-style: italic;
+    }
+    .hot-rank.top3 { color: #e53935; }
+
+    /* 标题：占满剩余宽度，过长省略号，点击区域整行 */
+    .hot-title {
+      flex: 1;
+      min-width: 0;               /* 配合省略号，防止撑破容器 */
+      font-size: 15px;
+    }
+    .hot-title a {
+      color: inherit;
+      text-decoration: none;
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .hot-item:active { background: #fafafa; }
+
+    /* 热度值：右侧弱化展示 */
+    .hot-heat {
+      flex: none;
+      font-size: 12px;
+      color: #bbb;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .page-footer {
+      margin-top: 16px;
+      text-align: center;
+      font-size: 12px;
+      color: #bbb;
+    }
+  </style>
 </head>
 <body>
-  <h1>项目已入库</h1>
-  <p>Day 2 占位页：仓库与首次提交已完成，MVP 将于 Day 7 开发。</p>
+  <main class="page">
+    <header class="page-header">
+      <h1 class="page-title">今日热搜</h1>
+      <p class="page-date" id="board-date">加载中…</p>
+    </header>
+
+    <!-- 榜单容器：2.4 的渲染逻辑会把 10 条热搜填进这里 -->
+    <ol class="hot-list" id="hot-list"></ol>
+
+    <footer class="page-footer">
+      <p>数据由站长每日手动整理 ｜ <span class="footer-source" id="board-source"></span></p>
+    </footer>
+  </main>
+
+  <!-- 唯一数据源头（PRD F3）：必须先于下面的逻辑加载 -->
+  <script src="data.js"></script>
+  <script>
+    // ============================================
+    // 渲染逻辑：读 data.js → 渲染榜单 → 写本地缓存
+    // 断网兜底：读不到 data.js 时，从本地缓存恢复上次榜单
+    // ============================================
+    (function () {
+      var listEl = document.getElementById("hot-list");
+      var dateEl = document.getElementById("board-date");
+      var sourceEl = document.getElementById("board-source");
+      var CACHE_KEY = "hot-board-cache"; // localStorage 里的缓存钥匙
+
+      // 把 "2026-09-22" 格式化成 "09月22日热搜"（PRD F4）
+      function formatDate(iso) {
+        var parts = iso.split("-");
+        return parts[1] + "月" + parts[2] + "日热搜";
+      }
+
+      // 生成一条榜单条目的 HTML
+      function renderItem(item) {
+        var top3 = item.rank <= 3 ? " top3" : "";
+        return (
+          '<li class="hot-item">' +
+          '<span class="hot-rank' + top3 + '">' + item.rank + "</span>" +
+          '<span class="hot-title"><a href="' + item.url + '" target="_blank" rel="noopener">' + item.title + "</a></span>" +
+          '<span class="hot-heat">' + item.source + " · " + item.heat.toLocaleString() + " 热度</span>" +
+          "</li>"
+        );
+      }
+
+      // 把一份数据画到页面上
+      function render(data) {
+        dateEl.textContent = formatDate(data.date);
+        var html = "";
+        for (var i = 0; i < data.items.length; i++) {
+          html += renderItem(data.items[i]);
+        }
+        listEl.innerHTML = html;
+      }
+
+      // 主流程
+      if (typeof HOT_DATA !== "undefined" && HOT_DATA.items.length === 10) {
+        render(HOT_DATA);                       // 正常：数据文件在，直接渲染
+        sourceEl.textContent = "来源：" + HOT_DATA.items[0].source;
+        try {
+          localStorage.setItem(CACHE_KEY, JSON.stringify(HOT_DATA)); // PRD F4：写入本地缓存
+        } catch (e) { /* 缓存写不进去不影响显示 */ }
+      } else {
+        // 兜底：读不到数据文件（如断网部署场景），从缓存恢复（PRD 验收：断网可用）
+        try {
+          var cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+          if (cached && cached.items && cached.items.length === 10) {
+            render(cached);
+            sourceEl.textContent = "来源：" + cached.items[0].source + "（离线缓存）";
+            return;
+          }
+        } catch (e) { /* 缓存也没有 */ }
+        listEl.innerHTML = '<li class="hot-item"><span class="hot-title">数据加载失败，请检查网络后刷新</span></li>';
+      }
+    })();
+  </script>
 </body>
 </html>
