@@ -11,11 +11,13 @@
    cd C:\Users\ws\Desktop\VibeCoding
    ```
 
-3. 启动本地服务器（Python 随 Windows 环境已备好）：
+3. 启动本地服务器：
 
    ```
-   python -m http.server 8000
+   "C:\Users\ws\.workbuddy\binaries\python\versions\3.13.12\python.exe" -m http.server 8000
    ```
+
+   > 注意：本机直接运行 `python -m http.server 8000` 可能被 Windows 商店的空壳程序静默拦截（输入后无任何反应），所以存档的是实测可用的完整路径命令。
 
 4. 浏览器打开：**http://localhost:8000**
 5. 看到榜单即成功。命令行窗口**保持开着**（它就是服务器），按 `Ctrl + C` 或直接关窗即停止服务。

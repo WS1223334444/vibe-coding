@@ -96,6 +96,38 @@
       font-size: 12px;
       color: #bbb;
     }
+
+    /* ========== 页面状态（Day 8）：加载 / 空 / 错误 ========== */
+    /* 加载态：灰色占位条 */
+    .bar-row { padding: 13px 16px 0; }
+    .bar-row:last-of-type { padding-bottom: 0; }
+    .bar {
+      display: block;
+      height: 14px;
+      border-radius: 4px;
+      background: #f0f0f0;
+    }
+
+    /* 空态 / 错误态：居中提示 */
+    .state-note {
+      padding: 32px 16px;
+      text-align: center;
+      font-size: 14px;
+      color: #888;
+    }
+    .state-error { color: #c62828; }
+
+    .retry-btn {
+      margin-top: 12px;
+      padding: 6px 20px;
+      font-size: 13px;
+      color: #c62828;
+      background: #fff;
+      border: 1px solid #c62828;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .retry-btn:active { background: #fdf3f3; }
   </style>
 </head>
 <body>
@@ -117,22 +149,42 @@
   <script src="data.js"></script>
   <script>
     // ============================================
-    // 渲染逻辑：读 data.js → 渲染榜单 → 写本地缓存
-    // 断网兜底：读不到 data.js 时，从本地缓存恢复上次榜单
+    // 渲染逻辑（Day 8 升级）：四种状态全覆盖
+    // 正常：读 data.js → 渲染 → 写本地缓存
+    // 加载：页面打开瞬间先摆灰色占位条
+    // 空态：数据合法但 0 条 → 「今日暂无热搜」
+    // 错误：数据损坏/加载失败 → 提示 + 重试按钮
+    // 演示开关：地址后加 ?state=loading / empty / error 可强制进入对应状态
     // ============================================
     (function () {
       var listEl = document.getElementById("hot-list");
       var dateEl = document.getElementById("board-date");
       var sourceEl = document.getElementById("board-source");
-      var CACHE_KEY = "hot-board-cache"; // localStorage 里的缓存钥匙
+      var CACHE_KEY = "hot-board-cache"; // 浏览器缓存钥匙（断网兜底用）
 
-      // 把 "2026-09-22" 格式化成 "09月22日热搜"（PRD F4）
+      // ---- 三种非常态的画法 ----
+      function showLoading() {
+        var bars = "";
+        for (var i = 0; i < 5; i++) {
+          bars += '<li class="bar-row"><span class="bar"></span></li>';
+        }
+        listEl.innerHTML = bars + '<li class="state-note">⏳ 加载中…</li>';
+      }
+      function showEmpty() {
+        dateEl.textContent = "—"; // 没有数据就没有可信日期
+        listEl.innerHTML = '<li class="state-note">📭 今日暂无热搜，站长还没更新</li>';
+      }
+      function showError() {
+        listEl.innerHTML =
+          '<li class="state-note state-error">⚠️ 榜单加载失败' +
+          '<br><button class="retry-btn" onclick="location.reload()">点击重试</button></li>';
+      }
+
+      // ---- 正常态 ----
       function formatDate(iso) {
         var parts = iso.split("-");
         return parts[1] + "月" + parts[2] + "日热搜";
       }
-
-      // 生成一条榜单条目的 HTML
       function renderItem(item) {
         var top3 = item.rank <= 3 ? " top3" : "";
         return (
@@ -143,8 +195,6 @@
           "</li>"
         );
       }
-
-      // 把一份数据画到页面上
       function render(data) {
         dateEl.textContent = formatDate(data.date);
         var html = "";
@@ -154,24 +204,36 @@
         listEl.innerHTML = html;
       }
 
-      // 主流程
-      if (typeof HOT_DATA !== "undefined" && HOT_DATA.items.length === 10) {
-        render(HOT_DATA);                       // 正常：数据文件在，直接渲染
+      // ---- 主流程 ----
+      showLoading(); // 第一步永远是加载态（哪怕只有一瞬间）
+
+      // 演示开关：?state=xxx 强制进入指定状态（教学验证用，不影响正常使用）
+      var forced = new URLSearchParams(location.search).get("state");
+      if (forced === "loading") return;
+      if (forced === "empty")  { showEmpty(); return; }
+      if (forced === "error")  { showError(); return; }
+
+      if (typeof HOT_DATA !== "undefined" && Array.isArray(HOT_DATA.items) && HOT_DATA.items.length > 0) {
+        // 正常路径：有数据
+        render(HOT_DATA);
         sourceEl.textContent = "来源：" + HOT_DATA.items[0].source;
         try {
-          localStorage.setItem(CACHE_KEY, JSON.stringify(HOT_DATA)); // PRD F4：写入本地缓存
+          localStorage.setItem(CACHE_KEY, JSON.stringify(HOT_DATA)); // 写缓存供断网兜底
         } catch (e) { /* 缓存写不进去不影响显示 */ }
+      } else if (typeof HOT_DATA !== "undefined" && Array.isArray(HOT_DATA.items) && HOT_DATA.items.length === 0) {
+        // 空态：数据合法但 0 条（比如站长还没更新）
+        showEmpty();
       } else {
-        // 兜底：读不到数据文件（如断网部署场景），从缓存恢复（PRD 验收：断网可用）
+        // 错误路径：数据文件缺失/损坏——先试缓存兜底，兜不住才亮错误态
         try {
           var cached = JSON.parse(localStorage.getItem(CACHE_KEY));
-          if (cached && cached.items && cached.items.length === 10) {
+          if (cached && cached.items && cached.items.length > 0) {
             render(cached);
             sourceEl.textContent = "来源：" + cached.items[0].source + "（离线缓存）";
             return;
           }
         } catch (e) { /* 缓存也没有 */ }
-        listEl.innerHTML = '<li class="hot-item"><span class="hot-title">数据加载失败，请检查网络后刷新</span></li>';
+        showError();
       }
     })();
   </script>
