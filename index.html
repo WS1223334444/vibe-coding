@@ -36,6 +36,29 @@
       color: #888;
     }
 
+    /* 筛选条（Day 12）：按名次段筛选，点中项高亮 = 「生效了」的即时反馈 */
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .filter-btn {
+      padding: 5px 14px;
+      font-size: 13px;
+      color: #555;
+      background: #fff;
+      border: 1px solid #e0e0e3;
+      border-radius: 14px;
+      cursor: pointer;
+    }
+    .filter-btn:active { background: #f0f0f2; }
+    /* 选中态：黑底白字，对比度极高，一眼看出当前条件 */
+    .filter-btn.active {
+      color: #fff;
+      background: #1a1a1a;
+      border-color: #1a1a1a;
+    }
+
     /* 榜单：白卡片，每条一行，靠序号+热度做视觉层次 */
     .hot-list {
       list-style: none;
@@ -170,6 +193,13 @@
       <p class="page-date" id="board-date">加载中…</p>
     </header>
 
+    <!-- 筛选条（Day 12）：名次段筛选；「有结果 / 无结果 / 清空恢复」三种情况都从这里走 -->
+    <div class="filter-bar" id="filter-bar" role="group" aria-label="榜单筛选">
+      <button class="filter-btn active" type="button" data-limit="0">全部</button>
+      <button class="filter-btn" type="button" data-limit="3">Top3</button>
+      <button class="filter-btn" type="button" data-limit="5">Top5</button>
+    </div>
+
     <!-- 榜单容器：2.4 的渲染逻辑会把 10 条热搜填进这里 -->
     <ol class="hot-list" id="hot-list"></ol>
 
@@ -194,6 +224,9 @@
       var dateEl = document.getElementById("board-date");
       var sourceEl = document.getElementById("board-source");
       var CACHE_KEY = "hot-board-cache"; // 浏览器缓存钥匙（断网兜底用）
+      var itemsRef = [];        // 当前可筛选的数据（正常态=全部条目，空态=空数组）
+      var currentLimit = 0;     // 当前筛选的名次上限，0=全部（Day 12）
+      var filterBar = document.getElementById("filter-bar"); // 筛选条容器
 
       // ---- 三种非常态的画法 ----
       function showLoading() {
@@ -237,6 +270,34 @@
         }
         listEl.innerHTML = html;
       }
+
+      // ---- Day 12：名次段筛选 ----
+      function applyFilter() {
+        var filtered = [];
+        for (var i = 0; i < itemsRef.length; i++) {
+          if (currentLimit === 0 || itemsRef[i].rank <= currentLimit) filtered.push(itemsRef[i]);
+        }
+        if (filtered.length === 0) {
+          // 无结果：复用空态样式，并给出回到「全部」的出口（反馈要给出口，不留死胡同）
+          listEl.innerHTML = '<li class="state-note">📭 该筛选条件下暂无热搜，试试「全部」</li>';
+          return;
+        }
+        var html = "";
+        for (var j = 0; j < filtered.length; j++) html += renderItem(filtered[j]);
+        listEl.innerHTML = html;
+      }
+
+      // 事件委托：筛选按钮点击 → 选中项高亮 + 榜单重渲染
+      // 反馈三要素：即时（点击瞬间高亮）、就地（就是被点的那个按钮）、说明结果（榜单立刻变）
+      filterBar.addEventListener("click", function (ev) {
+        var btn = ev.target.closest ? ev.target.closest(".filter-btn") : null;
+        if (!btn) return;
+        var all = filterBar.querySelectorAll(".filter-btn");
+        for (var i = 0; i < all.length; i++) all[i].classList.remove("active");
+        btn.classList.add("active");
+        currentLimit = parseInt(btn.getAttribute("data-limit"), 10) || 0;
+        applyFilter();
+      });
 
       // ---- Day 11：一键复制标题（带反馈的交互） ----
       // 事件委托：按钮是动态渲染的，监听挂在列表容器上，一次管住所有按钮
@@ -295,6 +356,7 @@
 
       if (typeof HOT_DATA !== "undefined" && Array.isArray(HOT_DATA.items) && HOT_DATA.items.length > 0) {
         // 正常路径：有数据
+        itemsRef = HOT_DATA.items; // 把数据交给筛选器（Day 12 接线）
         render(HOT_DATA);
         sourceEl.textContent = "来源：" + HOT_DATA.items[0].source;
         try {
@@ -308,6 +370,7 @@
         try {
           var cached = JSON.parse(localStorage.getItem(CACHE_KEY));
           if (cached && cached.items && cached.items.length > 0) {
+            itemsRef = cached.items; // 离线数据同样交给筛选器（Day 12 接线）
             render(cached);
             sourceEl.textContent = "来源：" + cached.items[0].source + "（离线缓存）";
             return;
