@@ -12,6 +12,7 @@
 - Git 署名（仅本仓库）：WS1223334444 / WS1223334444@users.noreply.github.com（用户选隐私选项）
 - .gitignore 只含 .env 相关；.workbuddy/ 用户拍板入库上传。
 - commit 格式：标题 `Day X｜一句话`，正文两行「改了什么 / 加了什么」（Day 3 起执行）。
+- ⚠️ 已知坑（Day 9 记录）：WorkBuddy 外壳环境不稳定——bash 环境可能丢 PATH（git 失踪，需手动补 PortableGit 的 cmd/usr/bin/mingw64 到 PATH）；`git push` 写操作可能被 SIGTERM 杀掉（bash 和 PowerShell 通道都复现过，ls-remote 只读操作正常）。绕过办法：让用户在自己的 cmd 窗口手动 `git push`，或重试/次日再推。commit 本身不受影响，先 commit 保平安。
 
 ## 用户偏好
 - 纯小白，要求每步讲清概念、可亲眼验证，严格按 AGENTS.md 交互（一次一步、等「进入下一板块」）。

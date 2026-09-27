@@ -62,7 +62,7 @@
       inset: 0;
     }
 
-    /* 排名：前三名给警示红，其余灰色 */
+    /* 排名：前三名金银铜（金 > 银 > 铜），其余灰色 */
     .hot-rank {
       flex: none;
       width: 26px;
@@ -72,7 +72,9 @@
       color: #999;
       font-style: italic;
     }
-    .hot-rank.top3 { color: #e53935; }
+    .hot-rank.top1 { color: #d4a017; }
+    .hot-rank.top2 { color: #8e959e; }
+    .hot-rank.top3 { color: #b87333; }
 
     /* 标题：占满剩余宽度，过长省略号，点击区域整行 */
     .hot-title {
@@ -194,10 +196,10 @@
         return parts[1] + "月" + parts[2] + "日热搜";
       }
       function renderItem(item) {
-        var top3 = item.rank <= 3 ? " top3" : "";
+        var rankClass = item.rank === 1 ? " top1" : item.rank === 2 ? " top2" : item.rank === 3 ? " top3" : "";
         return (
           '<li class="hot-item">' +
-          '<span class="hot-rank' + top3 + '">' + item.rank + "</span>" +
+          '<span class="hot-rank' + rankClass + '">' + item.rank + "</span>" +
           '<span class="hot-title"><a href="' + item.url + '" target="_blank" rel="noopener">' + item.title + "</a></span>" +
           '<span class="hot-heat">' + item.source + " · " + item.heat.toLocaleString() + " 热度</span>" +
           "</li>"
