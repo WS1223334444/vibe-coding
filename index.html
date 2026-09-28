@@ -153,6 +153,73 @@
       color: #999;
     }
 
+    /* ========== 多视图（Day 13）：导航 / 详情页 / 关于页 ========== */
+    .view-nav {
+      display: flex;
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+    .nav-link {
+      font-size: 14px;
+      color: #888;
+      text-decoration: none;
+      padding-bottom: 4px;
+      border-bottom: 2px solid transparent;
+    }
+    .nav-link.active {
+      color: #1a1a1a;
+      font-weight: 700;
+      border-bottom-color: #1a1a1a; /* 当前视图高亮 = 反馈「你在哪」 */
+    }
+
+    .view-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+      padding: 24px 20px;
+    }
+    .detail-back { margin-bottom: 14px; font-size: 13px; }
+    .detail-back a, .plain-link { color: #888; text-decoration: none; }
+    .detail-back a:hover, .plain-link:hover { color: #555; }
+
+    .detail-rank {
+      font-size: 40px;
+      font-weight: 700;
+      font-style: italic;
+      color: #d4a017;
+    }
+    .detail-title {
+      margin-top: 8px;
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+    .detail-meta {
+      margin-top: 8px;
+      font-size: 14px;
+      color: #888;
+    }
+    .detail-link {
+      display: inline-block;
+      margin-top: 18px;
+      padding: 8px 18px;
+      font-size: 14px;
+      color: #fff;
+      background: #1a1a1a;
+      border-radius: 8px;
+      text-decoration: none;
+    }
+    .detail-link:active { background: #3a3a3a; }
+
+    /* 关于页 */
+    .about-title { font-size: 16px; font-weight: 700; margin: 18px 0 6px; }
+    .about-title:first-child { margin-top: 0; }
+    .about-text { font-size: 14px; color: #555; }
+    .about-text a { color: #1a1a1a; }
+
+    /* 榜单条目上的「详情」入口：与复制按钮同款弱化风格 */
+    a.copy-btn { text-decoration: none; display: inline-block; }
+
     /* ========== 页面状态（Day 8）：加载 / 空 / 错误 ========== */
     /* 加载态：灰色占位条 */
     .bar-row { padding: 13px 16px 0; }
@@ -188,6 +255,14 @@
 </head>
 <body>
   <main class="page">
+    <!-- 顶部导航（Day 13）：当前视图高亮；详情页从榜单条目进入，不占导航位 -->
+    <nav class="view-nav" id="view-nav" aria-label="视图切换">
+      <a class="nav-link active" href="#/board" data-view="board">榜单</a>
+      <a class="nav-link" href="#/about" data-view="about">关于</a>
+    </nav>
+
+    <!-- 视图 1：今日榜单 -->
+    <section id="view-board">
     <header class="page-header">
       <h1 class="page-title">今日热搜</h1>
       <p class="page-date" id="board-date">加载中…</p>
@@ -206,6 +281,25 @@
     <footer class="page-footer">
       <p>数据由站长每日手动整理 ｜ <span class="footer-source" id="board-source"></span></p>
     </footer>
+    </section>
+
+    <!-- 视图 2：单条详情（Day 13）——从榜单条目的「详情」按钮进入 -->
+    <section id="view-detail" class="view-card" hidden>
+      <p class="detail-back"><a href="#/board">← 返回榜单</a></p>
+      <div id="detail-card"></div>
+    </section>
+
+    <!-- 视图 3：关于（Day 13） -->
+    <section id="view-about" class="view-card" hidden>
+      <h2 class="about-title">这是什么</h2>
+      <p class="about-text">「今日热搜」——每天一屏看懂今天全网在吵什么。</p>
+      <h2 class="about-title">数据从哪来</h2>
+      <p class="about-text">微博热搜榜。站长每天手动整理 10 条（排名、标题、热度、来源、原文链接），不自动爬取。</p>
+      <h2 class="about-title">为什么这么简</h2>
+      <p class="about-text">极简理念：没有登录、没有评论、没有算法推荐——只保留「看榜」最需要的东西。少即是多。</p>
+      <h2 class="about-title">技术栈</h2>
+      <p class="about-text">纯静态 HTML / CSS / JavaScript，零框架零后端。源码开在 <a href="https://github.com/WS1223334444/vibe-coding" target="_blank" rel="noopener">GitHub</a>。</p>
+    </section>
   </main>
 
   <!-- 唯一数据源头（PRD F3）：必须先于下面的逻辑加载 -->
@@ -259,6 +353,7 @@
           '<span class="hot-title"><a href="' + item.url + '" target="_blank" rel="noopener">' + item.title + "</a></span>" +
           '<span class="hot-heat">' + item.source + " · " + item.heat.toLocaleString() + " 热度</span>" +
           '<button class="copy-btn" type="button" data-title="' + item.title.replace(/"/g, "&quot;") + '">复制</button>' +
+          '<a class="copy-btn" href="#/detail/' + item.rank + '">详情</a>' +
           "</li>"
         );
       }
@@ -292,6 +387,9 @@
       filterBar.addEventListener("click", function (ev) {
         var btn = ev.target.closest ? ev.target.closest(".filter-btn") : null;
         if (!btn) return;
+        // 没有数据时不响应（?state= 演示态没加载数据、真空态没条目可筛）：
+        // 空数据一筛就是 0 条，会把演示态画面覆盖成「暂无热搜」，造成假故障
+        if (itemsRef.length === 0) return;
         var all = filterBar.querySelectorAll(".filter-btn");
         for (var i = 0; i < all.length; i++) all[i].classList.remove("active");
         btn.classList.add("active");
@@ -302,7 +400,8 @@
       // ---- Day 11：一键复制标题（带反馈的交互） ----
       // 事件委托：按钮是动态渲染的，监听挂在列表容器上，一次管住所有按钮
       listEl.addEventListener("click", function (ev) {
-        var btn = ev.target.closest ? ev.target.closest(".copy-btn") : null;
+        // 只认 <button> 的复制按钮；「详情」是 <a> 链接，虽然同款样式但不能被当成复制按钮处理
+        var btn = ev.target.closest ? ev.target.closest("button.copy-btn") : null;
         if (!btn) return; // 点的不是复制按钮，交给整行跳转逻辑
         copyText(btn.getAttribute("data-title"), btn);
       });
@@ -348,13 +447,15 @@
       // ---- 主流程 ----
       showLoading(); // 第一步永远是加载态（哪怕只有一瞬间）
 
-      // 演示开关：?state=xxx 强制进入指定状态（教学验证用，不影响正常使用）
+      // 演示开关：?state=xxx 强制榜单进入指定状态（教学验证用；Day 13 起路由不再被跳过，导航照常可用）
       var forced = new URLSearchParams(location.search).get("state");
-      if (forced === "loading") return;
-      if (forced === "empty")  { showEmpty(); return; }
-      if (forced === "error")  { showError(); return; }
-
-      if (typeof HOT_DATA !== "undefined" && Array.isArray(HOT_DATA.items) && HOT_DATA.items.length > 0) {
+      if (forced === "loading") {
+        // 保持首屏加载占位条不动
+      } else if (forced === "empty") {
+        showEmpty();
+      } else if (forced === "error") {
+        showError();
+      } else if (typeof HOT_DATA !== "undefined" && Array.isArray(HOT_DATA.items) && HOT_DATA.items.length > 0) {
         // 正常路径：有数据
         itemsRef = HOT_DATA.items; // 把数据交给筛选器（Day 12 接线）
         render(HOT_DATA);
@@ -373,11 +474,66 @@
             itemsRef = cached.items; // 离线数据同样交给筛选器（Day 12 接线）
             render(cached);
             sourceEl.textContent = "来源：" + cached.items[0].source + "（离线缓存）";
-            return;
           }
         } catch (e) { /* 缓存也没有 */ }
         showError();
       }
+
+      // ---- Day 13：hash 多视图路由 ----
+      // 规则：无 # 或 #/board = 榜单；#/detail/N = 第 N 条详情；#/about = 关于
+      // 换 hash 只换「舞台上的视图」，不重新加载页面；刷新/前进/后退都由 hashchange 兜住
+      var viewBoard = document.getElementById("view-board");
+      var viewDetail = document.getElementById("view-detail");
+      var viewAbout = document.getElementById("view-about");
+      var navLinks = document.querySelectorAll("#view-nav .nav-link");
+
+      function showView(name) {
+        viewBoard.hidden = name !== "board";
+        viewDetail.hidden = name !== "detail";
+        viewAbout.hidden = name !== "about";
+        // 导航高亮：详情页归属「榜单」标签（它是从榜单进来的）
+        for (var i = 0; i < navLinks.length; i++) {
+          var tab = navLinks[i].getAttribute("data-view");
+          var isActive = tab === name || (name === "detail" && tab === "board");
+          if (isActive) navLinks[i].classList.add("active");
+          else navLinks[i].classList.remove("active");
+        }
+      }
+
+      function renderDetail(rank) {
+        var card = document.getElementById("detail-card");
+        var item = null;
+        for (var i = 0; i < itemsRef.length; i++) {
+          if (itemsRef[i].rank === rank) { item = itemsRef[i]; break; }
+        }
+        if (!item) {
+          // 详情空态：条目不存在（数据更新后旧链接失效等），给出口不留死胡同
+          card.innerHTML =
+            '<p class="state-note">📭 没找到这条热搜——榜单可能刚更新过。' +
+            '<br><a class="plain-link" href="#/board">← 回榜单看看</a></p>';
+          return;
+        }
+        card.innerHTML =
+          '<div class="detail-rank">No.' + item.rank + "</div>" +
+          '<h2 class="detail-title">' + item.title + "</h2>" +
+          '<p class="detail-meta">' + item.source + " · " + item.heat.toLocaleString() + " 热度</p>" +
+          '<a class="detail-link" href="' + item.url + '" target="_blank" rel="noopener">查看原文 ↗</a>';
+      }
+
+      function route() {
+        var h = location.hash || "#/board";
+        if (h.indexOf("#/detail/") === 0) {
+          showView("detail");
+          renderDetail(parseInt(h.slice(9), 10)); // "#/detail/" 长度 9，后面是名次
+        } else if (h === "#/about") {
+          showView("about");
+        } else {
+          showView("board");
+        }
+      }
+
+      window.addEventListener("hashchange", route);
+      route(); // 首次进入也按当前 hash 定位视图
     })();
   </script>
 </body>
