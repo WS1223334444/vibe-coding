@@ -251,6 +251,24 @@
       cursor: pointer;
     }
     .retry-btn:active { background: #fdf3f3; }
+
+    /* ========== 手机窄屏（Day 14）：榜单条目改两行布局 ========== */
+    /* 由来：真人测试实锤——单行布局里排名/热度/按钮一律不缩，390px 屏留给标题不到 80px，标题被挤成两三个字 */
+    @media (max-width: 480px) {
+      .hot-item {
+        flex-wrap: wrap;               /* 允许热度与按钮掉到第二行 */
+        gap: 8px 12px;                 /* 行间距 8px，列间距维持 12px */
+      }
+      .hot-title {
+        flex: 0 0 calc(100% - 38px);   /* 26px 排名 + 12px 间距：标题与排名同占第一行，并撑满剩余宽度 */
+      }
+      .hot-title a {
+        white-space: normal;           /* 窄屏允许折行：宁可占两行，也要把标题显示完整 */
+      }
+      .hot-heat {
+        margin-left: 38px;             /* 第二行缩进对齐到标题起点，不顶着排名数字 */
+      }
+    }
   </style>
 </head>
 <body>
